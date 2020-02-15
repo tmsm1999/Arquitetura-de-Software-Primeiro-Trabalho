@@ -1,5 +1,7 @@
 Commits e comandos
 
+NOTA: O PROCESSO DEVE SER EFETUADO NESTA ORDEM!
+
 1 - Antes de se fazer qualquer commit, a primeira coisa a fazer é git pull. Isto vai verificar se há alguma alguma alteração na pasta do computador em relação ao que já se encontra no GitHub. Apenas compara os ficheiros que já lá estão.
 
 2 - A seguir cria-se um novo ramo de trabalho para que o merge possa ser feito em segurança e sem haver conflitos como o que já está feito. O nome do ramo deve, de certa forma, refletir a alteração que foi feita ou o que se adicionou de novo ao projeto.
@@ -22,12 +24,12 @@ Estando tudo OK clicamos em "Create pull request". Aparecendo tudo a verde no ec
 
 6 - Estando o merge concluído com sucesso as cores deverão mudar para roxo.
 
-7 - Finalmente no GitHub voltamos à raiz do repositório clicando em cima em "code" e depois em "branches". Clicamos no contentor para remover o ramo.
+7 - Na linha de comandos eliminamos o ramo utilizado para fazer o commit. Antes temos que passar para o ramo master e só depois é que podemos remover. 
 
-8 - Na linha de comandos eliminamos o ramo utilizado para fazer o commit. Antes temos que passar para o ramo master e só depois é que podemos remover. 
-
-9 - Fazemos então:
+8 - Fazemos então:
 
 	git checkout master
 	git pull (para atualizar o ramo master)
 	git branch -d nome_do_ramo_a_remover
+
+9 - Finalmente no GitHub voltamos à raiz do repositório clicando em cima em "code" e depois em "branches". Clicamos no contentor para remover o ramo.
