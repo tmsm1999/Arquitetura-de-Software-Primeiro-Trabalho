@@ -14,3 +14,20 @@ Commits e comandos
 	git commit -m "Descrição da alteração feita" (A opção -m é para incluir mensagem).
 	git push origin nome_do_ramo_em_que_se_está.
 
+5 - Se não der erro vamos ao GitHub e lá deverá aparecer em cima uma caixa beije com o botão verde "Compare & pull request". Carregamos aí e se estiver tudo ok deverá dizer "Able to merge". Só fazemos merge se aparecer essa mensagem. Se não aparecer isso é provavelmente por que não foi feito pull antes das alterações serem efetuadas.
+
+Em baixo dá para ver as alterações que foram feitas. Normalmente é o supervisor do projeto que gere os pull requests e gere o merge para o ramo master. Mas neste caso temos os dois controlo total do projeto, portanto poderá ou não fazer sentido adicionar comentários antes de fazermos pull. Talvez não.
+
+Estando tudo OK clicamos em "Create pull request". Aparecendo tudo a verde no ecrã seguinte e dizendo que não há conflitos clicamos em "Merge Pull Request".
+
+6 - Estando o merge concluído com sucesso as cores deverão mudar para roxo.
+
+7 - Finalmente no GitHub voltamos à raiz do repositório clicando em cima em "code" e depois em "branches". Clicamos no contentor para remover o ramo.
+
+8 - Na linha de comandos eliminamos o ramo utilizado para fazer o commit. Antes temos que passar para o ramo master e só depois é que podemos remover. 
+
+9 - Fazemos então:
+
+	git checkout master
+	git pull (para atualizar o ramo master)
+	git branch -d nome_do_ramo_a_remover
