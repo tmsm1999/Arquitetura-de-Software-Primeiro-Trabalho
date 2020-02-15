@@ -1,0 +1,16 @@
+Commits e comandos
+
+1 - Antes de se fazer qualquer commit, a primeira coisa a fazer é git pull. Isto vai verificar se há alguma alguma alteração na pasta do computador em relação ao que já se encontra no GitHub. Apenas compara os ficheiros que já lá estão.
+
+2 - A seguir cria-se um novo ramo de trabalho para que o merge possa ser feito em segurança e sem haver conflitos como o que já está feito. O nome do ramo deve, de certa forma, refletir a alteração que foi feita ou o que se adicionou de novo ao projeto.
+
+	git branch nome_do_ramo
+
+3 - Depois de criar o ramo executa-se o comando git checkout nome_do_ramo. Para ver todos os ramos existentes faz-se git branch -a.
+
+4 - Depois adiciona-se as alterações ao repositório:
+
+	git add . (O comando é mesmo com " .")
+	git commit -m "Descrição da alteração feita" (A opção -m é para incluir mensagem).
+	git push origin nome_do_ramo_em_que_se_está.
+
