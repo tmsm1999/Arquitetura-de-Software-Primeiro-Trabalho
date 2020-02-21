@@ -1,0 +1,1 @@
+- Properties, Java Build Path, Libraries, Add External Jar -> robocode/libs/robocode.jar, Javadoc location, edit, robocode/javadoc
