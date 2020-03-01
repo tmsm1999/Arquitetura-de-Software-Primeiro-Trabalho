@@ -80,7 +80,17 @@ public class ButtonsRobot extends AdvancedRobot {
 	}
 	
 	public void onHitRobot(HitRobotEvent e) {
+		//Face the robot.
+		turnRight(e.getBearing());
+
+		//Fire on him!
+		if (e.getEnergy() > 16) {
+			fire(3);
+		} else if (e.getEnergy() > 10) {
+			fire(2);
+		}
 		
+		ahead(40); //Smash him!
 	}
 	
 	public void onStatus(StatusEvent e) {
