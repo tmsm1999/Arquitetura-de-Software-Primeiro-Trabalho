@@ -25,8 +25,10 @@ public class ButtonsRobot extends AdvancedRobot {
 			// Replace the next 4 lines with any behavior you would like
 			setAdjustRadarForGunTurn(true);
 			setAdjustGunForRobotTurn(true);
+			
 			battleFieldHeight = getBattleFieldHeight();
 			battleFieldWidth = getBattleFieldWidth();
+			
 			while(true){
 				turnRadarRightRadians(Double.POSITIVE_INFINITY);
 			}
@@ -36,29 +38,39 @@ public class ButtonsRobot extends AdvancedRobot {
 	/**
 	 * onScannedRobot: What to do when you see another robot
 	 */
-	public void onScannedRobot(ScannedRobotEvent e){
+	public void onScannedRobot(ScannedRobotEvent e) {
+		
 		double energyChange = previousEnergy - (e.getEnergy());
 		setTurnRight(e.getBearing() + 90);
-		if(energyChange >= 0.1 && energyChange <= 3){
+		
+		if(energyChange >= 0.1 && energyChange <= 3) {
 			moveDirection *= -1;
 			setAhead(100*moveDirection);
 		}
-		if(e.getDistance() > 700)
+		
+		if(e.getDistance() > 700) {
 			ahead(100);
+		}
+
 		double turn = getHeading() - getGunHeading() + e.getBearing();
 		setTurnGunRight(normalizeBearing(turn));
-
 		fireGoodAmount(getEnergy(), e.getDistance());
+		
 		double radarTurn = getHeadingRadians() + e.getBearingRadians() - getRadarHeadingRadians();
-		setTurnRadarRightRadians(2.0*normalRelativeAngle(radarTurn));
-		previousEnergy = e.getEnergy();
+		setTurnRadarRightRadians(2.0 * normalRelativeAngle(radarTurn));
+		
+		previousEnergy = e.getEnergy();	
 	}
-	public void onHitByBullet(HitByBulletEvent e) {
 	
+	public void onHitByBullet(HitByBulletEvent e) {
+		turnRight(90 - e.getBearing());
+		ahead(250);
 	}
 	
 	public void onHitWall(HitWallEvent e) {
-		
+		double robotBearing = e.getBearing();
+		turnRight(-robotBearing);
+		ahead(200);
 	}	
 	
 	public void onBulletMissed(BulletMissedEvent e) {
@@ -66,7 +78,16 @@ public class ButtonsRobot extends AdvancedRobot {
 	}
 	
 	public void onHitRobot(HitRobotEvent e) {
+		turnRight(e.getBearing());
 
+		//Fire on him!
+		if (e.getEnergy() > 40) {
+			fire(3);
+		} else if (e.getEnergy() > 20) {
+			fire(2);
+		}
+		
+		ahead(40); //Smash him!
 	}
 	
 	public void onStatus(StatusEvent e) {
@@ -78,21 +99,54 @@ public class ButtonsRobot extends AdvancedRobot {
 	}
 	
 	public void onBulletHit(BulletHitEvent e) {
-		
+		ahead(50);
 	}
 	
-	private void fireGoodAmount(double en, double dis) {
-		if(dis < 600) {
-			if(en >= 90)
-				fire(3);
-			else if(en >= 80)
-				fire(2);
-			else if(en >= 40)
-				fire(1);
-			else
-				fire(0.5);
+	private void fireGoodAmount(double energy, double distance) {
+		//System.out.println(distance);
+		
+		if(distance <= 80 && energy >= 25) {
+			setBulletColor(new Color(255, 51, 51)); //Red
+			fire(3);
 		}
-	 }
+		else if(distance > 80 && distance <= 200) {
+			if(energy >= 95) {
+				setBulletColor(new Color(255, 51, 51)); //Red
+				fire(3);
+			}
+			else if(energy < 90 && energy >= 70){
+				setBulletColor(new Color(255, 153, 51)); //Orange
+				fire(2);
+			}
+			else if(energy >= 40) {
+				fire(1);
+				setBulletColor(new Color(255, 255, 51)); //Yellow
+			}
+			else {
+				setBulletColor(new Color(255, 255, 255)); //White
+				fire(0.25);
+			}
+		}
+		else if(distance > 200 && distance >= 280) {
+			if(energy >= 30) {
+				setBulletColor(new Color(255, 255, 51)); //Yellow
+				fire(0.5);
+			}
+			else if(energy >= 20) {
+				setBulletColor(new Color(0, 0, 0)); //White
+				fire(0.25);
+			}
+		}
+		else if(distance > 280 && distance < 500) {
+			if(energy >= 40) {
+				setBulletColor(new Color(255, 255, 51)); //Yellow
+				fire(0.3);
+			}
+			setBulletColor(new Color(255, 255, 255)); //White
+			fire(0.1);
+		}
+	}
+	
 	double normalizeBearing(double angle) {
 		while (angle >  180) angle -= 360;
 		while (angle < -180) angle += 360;
