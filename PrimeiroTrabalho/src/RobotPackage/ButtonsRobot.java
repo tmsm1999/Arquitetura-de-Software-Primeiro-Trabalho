@@ -1,16 +1,16 @@
 package RobotPackage;
 import robocode.*;
 import java.awt.*;
+import static robocode.util.Utils.*;
 
 public class ButtonsRobot extends AdvancedRobot {
 	
-	double battleFieldHeight = getBattleFieldHeight();
-	double battleFieldWidth = getBattleFieldWidth();
-	
-	int missedBullets = 0;
-	int hitBullets = 0;
-	
-	byte scanDirection = 1;
+	private double battleFieldHeight = 0.0;
+	private double battleFieldWidth = 0.0;
+	private byte moveDirection = 1;
+	private int missedBullets = 0;
+	private byte scanDirection = 1;
+	private double previousEnergy = 100.0;
 	
 	public void run() {
 		
@@ -21,11 +21,14 @@ public class ButtonsRobot extends AdvancedRobot {
 		double heading = getHeading();
 		System.out.println(heading);
 	
-		while(true) {
+		while(true){
 			// Replace the next 4 lines with any behavior you would like
-			setAdjustRadarForRobotTurn(true);
-			while(true) {
-				turnRadarRight(360);
+			setAdjustRadarForGunTurn(true);
+			setAdjustGunForRobotTurn(true);
+			battleFieldHeight = getBattleFieldHeight();
+			battleFieldWidth = getBattleFieldWidth();
+			while(true){
+				turnRadarRightRadians(Double.POSITIVE_INFINITY);
 			}
 		}
 	}
@@ -33,46 +36,29 @@ public class ButtonsRobot extends AdvancedRobot {
 	/**
 	 * onScannedRobot: What to do when you see another robot
 	 */
-	public void onScannedRobot(ScannedRobotEvent e) {
-		// Replace the next line with any behavior you would like
-		setTurnGunRight(getHeading() - getGunHeading() + e.getBearing()); //Points the gun to the opponent.
-		
-		double bulletStrength = Math.min(400 / e.getDistance(), 3);
-		
-		if(bulletStrength >= 0 && bulletStrength < 1) {
-			setBulletColor(new Color(255, 255, 51)); //Yellow
+	public void onScannedRobot(ScannedRobotEvent e){
+		double energyChange = previousEnergy - (e.getEnergy());
+		setTurnRight(e.getBearing() + 90);
+		if(energyChange >= 0.1 && energyChange <= 3){
+			moveDirection *= -1;
+			setAhead(100*moveDirection);
 		}
-		else if(bulletStrength >= 1 && bulletStrength < 2) {
-			setBulletColor(new Color(255, 153, 51)); //Orange
-		}
-		else {
-			setBulletColor(new Color(255, 51, 51)); //Red
-		}
-		
-		setFireBullet(Math.min(400 / e.getDistance(), 3));
-		
-		scanDirection *= -1; // changes value from 1 to -1
-		setTurnRadarRight(360 * scanDirection);
-	}
+		if(e.getDistance() > 700)
+			ahead(100);
+		double turn = getHeading() - getGunHeading() + e.getBearing();
+		setTurnGunRight(normalizeBearing(turn));
 
-	/**
-	 * onHitByBullet: What to do when you're hit by a bullet
-	 */
-	//Turn perpendicularly to the bullet path.
+		fireGoodAmount(getEnergy(), e.getDistance());
+		double radarTurn = getHeadingRadians() + e.getBearingRadians() - getRadarHeadingRadians();
+		setTurnRadarRightRadians(2.0*normalRelativeAngle(radarTurn));
+		previousEnergy = e.getEnergy();
+	}
 	public void onHitByBullet(HitByBulletEvent e) {
-		// Replace the next line with any behavior you would like
-		back(10);
-		turnRight(90 - e.getBearing());
+	
 	}
 	
-	/**
-	 * onHitWall: What to do when you hit a wall
-	 */
 	public void onHitWall(HitWallEvent e) {
-		// Replace the next line with any behavior you would like
-		double robotBearing = e.getBearing();
-		turnRight(-robotBearing);
-		ahead(200);
+		
 	}	
 	
 	public void onBulletMissed(BulletMissedEvent e) {
@@ -80,17 +66,7 @@ public class ButtonsRobot extends AdvancedRobot {
 	}
 	
 	public void onHitRobot(HitRobotEvent e) {
-		//Face the robot.
-		turnRight(e.getBearing());
 
-		//Fire on him!
-		if (e.getEnergy() > 16) {
-			fire(3);
-		} else if (e.getEnergy() > 10) {
-			fire(2);
-		}
-		
-		ahead(40); //Smash him!
 	}
 	
 	public void onStatus(StatusEvent e) {
@@ -103,38 +79,23 @@ public class ButtonsRobot extends AdvancedRobot {
 	
 	public void onBulletHit(BulletHitEvent e) {
 		
-		double xPosition = getX();
-		double yPosition = getY();
-		double heading = getHeading();
-		
-		if(xPosition <= battleFieldWidth / 2) {
-			if(yPosition <= battleFieldHeight / 2) {
-				while(heading != 0) {
-					turnRight(1);
-				}
-			}
-			else {
-				while(heading != 90) {
-					turnRight(1);
-				}
-			}
+	}
+	
+	private void fireGoodAmount(double en, double dis) {
+		if(dis < 600) {
+			if(en >= 90)
+				fire(3);
+			else if(en >= 80)
+				fire(2);
+			else if(en >= 40)
+				fire(1);
+			else
+				fire(0.5);
 		}
-		else if(xPosition > battleFieldWidth / 2) {
-			if(yPosition <= battleFieldHeight / 2) {
-				while(heading != 0) {
-					turnRight(1);
-				}
-			}
-			else {
-				while(heading != 90) {
-					turnRight(1);
-				}
-			}
-		}
-		
-		scanDirection *= -1; // changes value from 1 to -1
-		setTurnRadarRight(360 * scanDirection);
-		
-		hitBullets++;
+	 }
+	double normalizeBearing(double angle) {
+		while (angle >  180) angle -= 360;
+		while (angle < -180) angle += 360;
+		return angle;
 	}
 }
