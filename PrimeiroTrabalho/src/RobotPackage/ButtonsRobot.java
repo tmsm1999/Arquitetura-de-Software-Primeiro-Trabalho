@@ -31,6 +31,8 @@ public class ButtonsRobot extends AdvancedRobot {
 			
 			while(true){
 				turnRadarRightRadians(Double.POSITIVE_INFINITY);
+				moveDirection *= -1;
+				setAhead(100*moveDirection);
 			}
 		}
 	}
@@ -51,6 +53,7 @@ public class ButtonsRobot extends AdvancedRobot {
 		if(e.getDistance() > 700) {
 			ahead(100);
 		}
+		
 
 		double turn = getHeading() - getGunHeading() + e.getBearing();
 		setTurnGunRight(normalizeBearing(turn));
@@ -59,12 +62,16 @@ public class ButtonsRobot extends AdvancedRobot {
 		double radarTurn = getHeadingRadians() + e.getBearingRadians() - getRadarHeadingRadians();
 		setTurnRadarRightRadians(2.0 * normalRelativeAngle(radarTurn));
 		
-		previousEnergy = e.getEnergy();	
+		if(e.getDistance() < 200){
+			
+			fireGoodAmount(getEnergy(), e.getDistance());
+		}
+		previousEnergy = e.getEnergy();
 	}
 	
 	public void onHitByBullet(HitByBulletEvent e) {
-		turnRight(90 - e.getBearing());
-		ahead(250);
+		//turnRight(90 - e.getBearing());
+		//ahead(250);
 	}
 	
 	public void onHitWall(HitWallEvent e) {
@@ -78,16 +85,18 @@ public class ButtonsRobot extends AdvancedRobot {
 	}
 	
 	public void onHitRobot(HitRobotEvent e) {
-		turnRight(e.getBearing());
-
-		//Fire on him!
+		double turn = getHeading() - getGunHeading() + e.getBearing();
+		setTurnGunRight(normalizeBearing(turn));
+		fireGoodAmount(getEnergy(), 80);
+		
+		/*//Fire on him!
 		if (e.getEnergy() > 40) {
 			fire(3);
 		} else if (e.getEnergy() > 20) {
 			fire(2);
 		}
 		
-		ahead(40); //Smash him!
+		ahead(40); //Smash him!*/
 	}
 	
 	public void onStatus(StatusEvent e) {
@@ -99,12 +108,12 @@ public class ButtonsRobot extends AdvancedRobot {
 	}
 	
 	public void onBulletHit(BulletHitEvent e) {
-		ahead(50);
+		//ahead(50);
 	}
 	
 	private void fireGoodAmount(double energy, double distance) {
 		//System.out.println(distance);
-		
+			
 		if(distance <= 80 && energy >= 25) {
 			setBulletColor(new Color(255, 51, 51)); //Red
 			fire(3);
