@@ -1,100 +1,104 @@
 package RobotPackage;
-import robocode.*;
 import robocode.util.Utils;
+import robocode.*;
 import java.awt.*;
 
 public class ButtonsRobot extends AdvancedRobot {
-	private byte moveDirection = 1;
-	private double previousEnergy = 100.0;
+	
+	private byte moveDirection = 1; //Direção definida para movimento da arma.
+	private double previousEnergy = 100.0; //Variável que guarda a energia do enimigo.
 	
 	public void run() {
-		// Change robot's body, gun and radar colors
-		setBodyColor(new Color(0, 0, 0));
-		setGunColor(new Color(255, 255, 255));
-		setRadarColor(new Color(192, 192, 192));
+		//Mudança das cores do robô.
+		
+		setBodyColor(new Color(0, 0, 0)); //Cor do corpo do robô = preto.
+		setGunColor(new Color(255, 255, 255)); //Cor da arma do robô = branco.
+		setRadarColor(new Color(192, 192, 192)); //Cor do radar = Cinzento claro.
 	
 		while(true){
-			// Separate radar from gun
+			//Permite mover a arma e o radar do robô separadamente.
 			setAdjustRadarForGunTurn(true);
-			// Separate gun from body
+			//Permite mover a arma e o corpo do robô separadamente.
 			setAdjustGunForRobotTurn(true);
 			
+			//Este ciclo while tentar aumentar a probabilidade de detatar robôs movendo o radar alternadamente.
+			//A cada iteração deste ciclo o robô muda de direção.
 			while(true){
-				// Scan all around for robots
 				turnRadarRightRadians(Double.POSITIVE_INFINITY);
-				// Move left/right alternately
 				moveDirection *= -1;
-				setAhead(100*moveDirection);
+				setAhead(100 * moveDirection);
 			}
 		}
 	}
 	
 	public void onScannedRobot(ScannedRobotEvent e) {
 		
-		// Get in a perpendicular position towards the enemy
+		//O robô move-se perpendicularmente em relação à posição do enimigo.
 		setTurnRight(e.getBearing() + 90);
 		
-		// Value that stores enemies change in energy
+		//Valor que guarda a mudança de energia do enimigo.
 		double energyChange = previousEnergy - (e.getEnergy());
 		
-		// If the enemie's energy change looks like a shot bullet, try to dodge
+		//Se a diferença de energia parecer ter sido causada pelo disparo de uma bala - tentamos desviar.
 		if(energyChange >= 0.1 && energyChange <= 3) {
 			moveDirection *= -1;
 			setAhead(100*moveDirection);
 		}
 		
-		// If the enemy is too far away, try to get closer
+		//Quando o enimigo está muito longe tentar aproximar.
 		if(e.getDistance() > 700) {
 			ahead(100);
 		}
 		
-		// To calculate the time at which we should it the bullet, 
-		//we sum the current time and the time that the bullet takes to travel (distance/speed)
-		long time = getTime() + (int)(e.getDistance()/(20-(3*fireGoodAmount(getEnergy(), e.getDistance()))));
+		//Tenta prever quando é que a bala deve ser disparada. Tempo atual + tempo que a bala demora a viajar pela arena.
+		long time = getTime() + (int) (e.getDistance() / (20 - (3 * fireGoodAmount(getEnergy(), e.getDistance()))));
 		
-		// Total bearing is going to be the sum between the heading and the bearing module 180 degrees, or 2*PI radians
-		double totBear = (getHeadingRadians()+e.getBearingRadians())%(2*Math.PI);
+		//Soma entre heading atual e bearing módulo 180 graus, ou 2 * PI.
+		double totalBearing = (getHeadingRadians() + e.getBearingRadians()) % (2*Math.PI);
 		
-		// The absolute bearing is simply the sum between the bearing and the heading
+		//Soma entre bearing e heading.
         double absBearing = e.getBearingRadians() + getHeadingRadians();
         
+        //Dado que no robocode os graus são medidos na direção oposta, usamos:
+        // - A função seno para calcular o X.
+        // - A função cosseno para calcular o Y.
        
-        // Since in robocode the degrees are measured on the opposite direction, we use the sin function to calculate the X
-        // And the cos function to calculate the Y
-       
-        // We can calculate the enemies position using a triangle, by using our location, the sin of the total bearing and the distance
-        double curX = getX()+Math.sin(totBear)*e.getDistance();
-        double curY = getY()+Math.cos(totBear)*e.getDistance();
+        //Recalculamos a posição do enimigo usando um triângulo. Usamos a nossa localização e o seno com a total bearing e a distância.
+        double curX = getX()+Math.sin(totalBearing)*e.getDistance();
+        double curY = getY()+Math.cos(totalBearing)*e.getDistance();
         
-        // In order to predict where the enemy might end up, we will use an auxiliary function that will be explained further
+
+        //Para prever onde é que o inimigo vai, usamos uma função auxiliar do tipo predict.
         double predX = predictX(curX, e.getHeading(), e.getVelocity(), getTime(), time);
         double predY = predictY(curY, e.getHeading(), e.getVelocity(), getTime(), time);;
         
-        // Point the gun to the predicted position and fire away!
-        double gunOffset = getGunHeadingRadians() - absbearing(getX(),getY(),predX,predY);
+        //Apontar a arma para a posição que foi prevista.
+        double gunOffset = getGunHeadingRadians() - absBearing(getX(),getY(),predX,predY);
         setTurnGunLeftRadians(normaliseBearingRadians(gunOffset));
         fire(fireGoodAmount(getEnergy(), e.getDistance()));
         
-        // Make the radar follow the enemy
+        //Fazer o radar seguir o inimigo.
         setTurnRadarRightRadians(Utils.normalRelativeAngle(absBearing - getRadarHeadingRadians()) * 2);
         
-        // If the target is very close, fire
+        //Se o robô inimigo estiver perto disparar.
 		if(e.getDistance() < 80){	
 			fire(fireGoodAmount(getEnergy(), e.getDistance()));
 		}
 		
-		// Update the previous energy value
+		//Atualizar o valor de energia.
 		previousEnergy = e.getEnergy();
 	}
 	
-	// If a wall is hit, back off!
+	//Robô afasta-se da parede quando embate.
+	//@param evento com o robô enimigo.
 	public void onHitWall(HitWallEvent e) {
 		double robotBearing = e.getBearing();
 		turnRight(-robotBearing);
 		ahead(200);
 	}	
 	
-	// If a robot is hit turn the gun to it's position and fire again
+	//Quando um robô colide com outro viramos a arma para a posição atual desse robô e disparamos.
+	//@param evento com o robô enimigo.
 	public void onHitRobot(HitRobotEvent e) {
 		double turn = getHeading() - getGunHeading() + e.getBearing();
 		setTurnGunRight(normalizeBearing(turn));
@@ -102,53 +106,58 @@ public class ButtonsRobot extends AdvancedRobot {
 	}
 	
 	
-	// Function to try to calculate the best power that the bullet should be shot at
+	//Função que tenta prever qual a melhor ação para o robô numa dada situação.
+	//Esta função tem como base a energia atual do nosso robô e a distância a que se encontra do outro robô.
+	
+	//@param energy (energia atual do robô e distance - distância atual do robô).
 	private double fireGoodAmount(double energy, double distance) {	
 		if(distance <= 80 && energy >= 25) {
-			setBulletColor(new Color(255, 51, 51)); //Red
+			setBulletColor(new Color(255, 51, 51)); //Vermelho
 			return 3;
 		}
 		else if(distance > 80 && distance <= 200) {
 			if(energy >= 95) {
-				setBulletColor(new Color(255, 51, 51)); //Red
+				setBulletColor(new Color(255, 51, 51)); //Vermelho
 				return 3;
 			}
 			else if(energy < 90 && energy >= 70){
-				setBulletColor(new Color(255, 153, 51)); //Orange
+				setBulletColor(new Color(255, 153, 51)); //Laranja
 				return 2;
 			}
 			else if(energy >= 40) {
-				setBulletColor(new Color(255, 255, 51)); //Yellow
+				setBulletColor(new Color(255, 255, 51)); //Amarelo
 				return 1;
 			}
 			else {
-				setBulletColor(new Color(255, 255, 255)); //White
+				setBulletColor(new Color(255, 255, 255)); //Branco
 				return 0.25;
 			}
 		}
 		else if(distance > 200 && distance >= 280) {
 			if(energy >= 30) {
-				setBulletColor(new Color(255, 255, 51)); //Yellow
+				setBulletColor(new Color(255, 255, 51)); //Amarelo
 				return 0.5;
 			}
 			else if(energy >= 20) {
-				setBulletColor(new Color(0, 0, 0)); //White
+				setBulletColor(new Color(0, 0, 0)); //Branco
 				return 0.25;
 			}
 		}
 		else if(distance > 280 && distance < 500) {
 			if(energy >= 40) {
-				setBulletColor(new Color(255, 255, 51)); //Yellow
+				setBulletColor(new Color(255, 255, 51)); //Amarelo
 				return 0.3;
 			}
-			setBulletColor(new Color(255, 255, 255)); //White
+			setBulletColor(new Color(255, 255, 255)); //Branco
 			return 0.1;
 		}
 		return 0;
 	}
 	
-	// Normalize the bearing in radians
-	double normaliseBearingRadians(double ang) {
+	//Normaliza o bearing em radianos.
+	//@param ang é o ângulo em randianos.
+	//@return ângulo normalizado.
+	private double normaliseBearingRadians(double ang) {
         if(ang > Math.PI)
         	ang -= 2*Math.PI;
         if(ang < -Math.PI)
@@ -156,8 +165,10 @@ public class ButtonsRobot extends AdvancedRobot {
         return ang;
 	}
 	
-	// Normalize the bearing in degrees
-	double normalizeBearing(double angle) {
+	//Normaliza o bearing em graus.
+	//@param ang é o ângulo em graus.
+		//@return ângulo normalizado.
+	private double normalizeBearing(double angle) {
 		while(angle >  180) 
 			angle -= 360;
 		while(angle < -180) 
@@ -165,20 +176,28 @@ public class ButtonsRobot extends AdvancedRobot {
 		return angle;
 	}
 	
-	// To predict the Y position of the enemy, we use it's last seen position plus the sin of the 
-	// heading multiplied by its speed and the time variation
-	double predictX(double curX, double heading, double vel, long startTime, long curTime) {
-		return curX + Math.sin(heading)*vel*(curTime-startTime);
+	//Para prever a posição X do inimigo, usamos a última posição registada mais o seno da heading 
+	//multiplicado pela velocidade e variação do tempo
+	
+	//@param posição atual, heading, velocidade, tempo inicial, tempo atual.
+	//@return X da posição atual.
+	private double predictX(double curX, double heading, double vel, long startTime, long curTime) {
+		return curX + Math.sin(heading) * vel * (curTime - startTime);
 	}
 	
-	// To predict the Y position of the enemy, we use it's last seen position plus the cos of the 
-	// heading multiplied by its speed and the time variation
-	double predictY(double curY, double heading, double vel, long startTime, long curTime) {
-		return curY + Math.cos(heading)*vel*(curTime-startTime);
+	//Para prever a posição Y do inimigo, usamos a última posição registada mais o cosseno da heading 
+	//multiplicado pela velocidade e variação do tempo
+	
+	//@param posição atual, heading, velocidade, tempo inicial, tempo atual.
+	//@return X da posição atual.
+	private double predictY(double curY, double heading, double vel, long startTime, long curTime) {
+		return curY + Math.cos(heading) * vel * (curTime - startTime);
 	}
 	
-	// Simple function to calculate the distance between two points
-	public double dis2Points(double x1, double y1, double x2, double y2){
+	//Calcular a distância entre dois pontos.
+	//@param x1, y1, x2, y2 são as coordenadas
+	//@return double com a distância
+	public double distanceBetweenPoints(double x1, double y1, double x2, double y2){
             double disX = x2-x1;
             double disY = y2-y1;
             double h = Math.sqrt( disX*disX + disY*disY );
@@ -188,19 +207,26 @@ public class ButtonsRobot extends AdvancedRobot {
 	// Function to calculate the absolute bearing given the quadrant of 
 	// Which the distances between the X and Y coordinates would be a part of
 	// Using the sin inverse trigonometric function
-	public double absbearing(double x1, double y1, double x2, double y2) {
+	
+	//Função que calcula a bearing absoluta entre o quadrante 
+	public double absBearing(double x1, double y1, double x2, double y2) {
             double disX = x2-x1;
             double disY = y2-y1;
-            double h = dis2Points( x1,y1, x2,y2 );
+            
+            double h = distanceBetweenPoints(x1, y1, x2, y2);
+            
             if(disX > 0 && disY > 0) {
                     return Math.asin(disX / h);
             }
+            
             if(disX > 0 && disY < 0) {
                     return Math.PI - Math.asin(disX / h);
             }
+            
             if(disX < 0 && disY < 0){
                     return Math.PI + Math.asin(-disX / h);
             }
+            
             if(disX < 0 && disY > 0){
                     return 2.0*Math.PI - Math.asin(-disX / h);
             }
