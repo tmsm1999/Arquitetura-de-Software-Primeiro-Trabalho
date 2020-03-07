@@ -14,6 +14,7 @@ public class ButtonsRobot extends AdvancedRobot {
 	
 	private byte moveDirection = 1; //Direção definida para movimento da arma.
 	private double previousEnergy = 100.0; //Variável que guarda a energia do inimigo.
+	private double hitsTaken = 0;
 	
 	public void run() {
 		
@@ -28,12 +29,20 @@ public class ButtonsRobot extends AdvancedRobot {
 			//Permite mover a arma e o corpo do robot separadamente.
 			setAdjustGunForRobotTurn(true);
 			
-			//Este ciclo while tenta aumentar a probabilidade de detatar robot movendo o radar alternadamente.
-			//A cada iteração deste ciclo o robot muda de direção movimentando-se um pouco na direção atual.
+			//Este ciclo while tenta aumentar a probabilidade de detetar robot movendo o radar alternadamente.
+			//A cada iteração deste ciclo o robot muda de direção aleatoriamente movimentando-se um pouco na direção atual.
 			while(true){
 				turnRadarRightRadians(Double.POSITIVE_INFINITY);
-				moveDirection *= -1;
-				setAhead(100 * moveDirection);
+				double r = Math.random();
+				if(r < 0.5)
+					moveDirection = -1;
+				else
+					moveDirection = 1;
+				if(hitsTaken%5 == 0)
+					setAhead(100 * moveDirection);
+				else
+					setTurnRight(90);
+					setAhead(100 * moveDirection);
 			}
 		}
 	}
@@ -48,8 +57,18 @@ public class ButtonsRobot extends AdvancedRobot {
 		
 		//Se a diferença de energia parecer ter sido causada pelo disparo de uma bala - tentamos desviar.
 		if(energyChange >= 0.1 && energyChange <= 3) {
-			moveDirection *= -1;
-			setAhead(100*moveDirection);
+			double r = Math.random();
+			if(r < 0.5)
+				moveDirection = -1;
+			else
+				moveDirection = 1;
+			if(hitsTaken%5 == 0)
+				setAhead(100 * moveDirection);
+			else
+				setTurnRight(90);
+				setAhead(100 * moveDirection);
+				setTurnRight(e.getBearing() + 90);
+				
 		}
 		
 		//Quando o inimigo está muito longe, tentar aproximar.
@@ -113,6 +132,10 @@ public class ButtonsRobot extends AdvancedRobot {
 		fire(fireGoodAmount(getEnergy(), 100));
 	}
 	
+	public void onHitByBullet(HitByBulletEvent e) {
+		hitsTaken++;
+	}
+	
 	
 	//Função que tenta prever qual a melhor ação para o robot numa dada situação.
 	//Esta função tem como base a energia atual do nosso robot e a distância a que se encontra do outro robot.
@@ -130,36 +153,36 @@ public class ButtonsRobot extends AdvancedRobot {
 			}
 			else if(energy < 90 && energy >= 70){
 				setBulletColor(new Color(255, 153, 51)); //Laranja
-				return 2;
+				return 3;
 			}
 			else if(energy >= 40) {
 				setBulletColor(new Color(255, 255, 51)); //Amarelo
-				return 1;
+				return 2;
 			}
 			else {
 				setBulletColor(new Color(255, 255, 255)); //Branco
-				return 0.25;
+				return 1.5;
 			}
 		}
-		else if(distance > 200 && distance >= 280) {
+		else if(distance > 150 && distance <= 280) {
 			if(energy >= 30) {
 				setBulletColor(new Color(255, 255, 51)); //Amarelo
-				return 0.5;
+				return 2;
 			}
 			else if(energy >= 20) {
 				setBulletColor(new Color(0, 0, 0)); //Branco
-				return 0.25;
+				return 1;
 			}
 		}
-		else if(distance > 280 && distance < 500) {
+		else if(distance > 150 && distance < 500) {
 			if(energy >= 40) {
 				setBulletColor(new Color(255, 255, 51)); //Amarelo
-				return 0.3;
+				return 2;
 			}
 			setBulletColor(new Color(255, 255, 255)); //Branco
-			return 0.1;
+			return 1;
 		}
-		return 0;
+		return 1;
 	}
 	
 	//Normaliza o bearing em radianos.
